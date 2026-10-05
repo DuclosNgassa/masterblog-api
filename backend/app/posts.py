@@ -46,3 +46,27 @@ def create_post():
     POSTS.append(new_post)
 
     return jsonify({'id': str(id), 'title': title, 'content': content}), 201
+
+
+@posts_bp.route('/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    # 1. Search for the post with the matching ID
+    for index, post in enumerate(POSTS):
+        if post["id"] == post_id:
+            # 2. Remove the post from the list
+            POSTS.pop(index)
+
+            # 3. Return a success response (or 204 No Content)
+            return (
+                jsonify(
+                    {
+                        "message": f"Post with ID {post_id} has been deleted successfully.",
+                    }
+                ),
+                200,
+            )
+
+    # 4. If post is not found, raise an error (or call abort(404))
+    raise APIError(
+        message=f"Post with ID {post_id} not found.", status_code=404
+    )
