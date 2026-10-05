@@ -2,4 +2,8 @@
 name = "masterblog-api"
 version = "0.1.0"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "flask>=3.1.3",
+    "flask-cors>=6.0.5",
+    "werkzeug>=3.1.9",
+]
