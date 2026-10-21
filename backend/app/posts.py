@@ -4,7 +4,7 @@ from app.errors.exceptions import APIError
 
 posts_bp = Blueprint('posts', __name__, url_prefix='/api/posts')
 
-POSTS:list[dict] = [
+POSTS: list[dict] = [
     {"id": 1, "title": "First post", "content": "This is the first post."},
     {"id": 2, "title": "Second post", "content": "This is the second post."},
 ]
@@ -12,6 +12,12 @@ POSTS:list[dict] = [
 
 @posts_bp.route('', methods=['GET'])
 def get_posts():
+    """
+    Get all posts
+    The list of all posts can be sorted by title or content ascending or descending.
+    The default sorting method is ascending.
+    :return: the list of all posts.
+    """
     sort_field = request.args.get('sort')
     direction = request.args.get('direction', 'asc').lower()
 
@@ -40,13 +46,17 @@ def get_posts():
 
 @posts_bp.route('', methods=['POST'])
 def create_post():
+    """
+    Creates a new post. Required request body should content title and content as string values
+    :return: new created post or APIError if request body is invalid
+    """
     data = request.get_json(silent=True) or {}
 
     if not data:
         raise APIError('Request body must be valid JSON', status_code=400)
 
-    title = data.get('title')
-    content = data.get('content')
+    title = data.get('title', '').strip()
+    content = data.get('content', '').strip()
 
     if not title:
         raise APIError(
@@ -61,18 +71,24 @@ def create_post():
             details={'required_fields': ['content']},
         )
 
+    next_id = max((post['id'] for post in POSTS), default=0) + 1
     new_post = {
-        'id': max(post['id'] for post in POSTS) + 1,
+        'id': next_id,
         'title': title,
         'content': content,
     }
     POSTS.append(new_post)
 
-    return jsonify({'id': str(id), 'title': title, 'content': content}), 201
+    return jsonify(new_post), 201
 
 
 @posts_bp.route('/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
+    """
+    Deletes an existing post by post_id
+    :param post_id:
+    :return: Success message if the post was deleted or APIError if not post was found by the given id
+    """
     for index, post in enumerate(POSTS):
         if post["id"] == post_id:
             POSTS.pop(index)
@@ -93,6 +109,11 @@ def delete_post(post_id):
 
 @posts_bp.route('/<int:post_id>', methods=['PUT'])
 def update_post(post_id):
+    """
+    Updates an existing post. Required request body should content title or content as string values
+    :param post_id:
+    :return: new updated post or APIError if not post was found by the given id
+    """
     data = request.get_json(silent=True) or {}
 
     new_title = data.get('title')
@@ -122,8 +143,13 @@ def update_post(post_id):
         message=f'Post with ID {post_id} not found.', status_code=404
     )
 
+
 @posts_bp.route('/search', methods=['GET'])
 def search_posts():
+    """
+    Searches for posts with title and content as string values.
+    :return: all post found or an empty list
+    """
     title_query = request.args.get('title', '').strip().lower()
     content_query = request.args.get('content', '').strip().lower()
 
